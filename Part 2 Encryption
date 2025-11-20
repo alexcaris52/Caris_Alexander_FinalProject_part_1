@@ -1,1 +1,180 @@
+/*
+ Prompts the user for:
+   - Encrypt or Decrypt (E/D)
+   - Keyword
+   - Full input file path (must be a .txt file)
 
+ Automatically generates the output file name based on the input file:
+   - Encrypt: <input_filename>_encrypted.txt
+   - Decrypt: <input_filename>_decrypted.txt
+
+*/
+
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <vector>
+#include <cctype>
+using namespace std;
+
+const string PLAIN_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+// Remove duplicate letters from keyword
+
+string removeDuplicates(const string& keyword) 
+{
+    string result;
+    vector<bool> seen(26, false);
+    for (char c : keyword) 
+    {
+        if (!isalpha(c)) continue;
+        char upper = toupper(c);
+        int idx = upper - 'A';
+        if (!seen[idx]) 
+        {
+            result += upper;
+            seen[idx] = true;
+        }
+    }
+    return result;
+}
+
+// Build cipher alphabet from keyword
+
+string buildCipherAlphabet(const string& keyword) 
+{
+    string cleaned = removeDuplicates(keyword);
+    vector<bool> used(26, false);
+    for (char c : cleaned) used[c - 'A'] = true;
+
+    string cipher = cleaned;
+
+    for (char c = 'Z'; c >= 'A'; --c) 
+    {
+        if (!used[c - 'A'])
+            cipher += c;
+    }
+
+    return cipher;
+}
+
+// Encrypt a single character
+
+char encryptChar(char c, const string& cipher) 
+{
+    if (!isalpha(c)) return c;
+    bool isLower = islower(c);
+    char upper = toupper(c);
+    int index = upper - 'A';
+    char encrypted = cipher[index];
+    return isLower ? tolower(encrypted) : encrypted;
+}
+
+// Decrypt a single character
+
+char decryptChar(char c, const string& cipher) 
+{
+    if (!isalpha(c)) return c;
+    bool isLower = islower(c);
+    char upper = toupper(c);
+    int index = cipher.find(upper);
+    if (index == string::npos) return c;
+    char decrypted = PLAIN_ALPHABET[index];
+    return isLower ? tolower(decrypted) : decrypted;
+}
+
+// Process the file (encrypt or decrypt)
+
+void processFile(bool encryptMode, const string& cipher,
+    const string& inputPath, const string& outputPath)
+{
+    ifstream fin(inputPath);
+    if (!fin) 
+    {
+        cerr << "ERROR: Cannot open input file.\n";
+        cerr << "Make sure the full file path is correct and the file is a .txt file.\n";
+        return;
+    }
+
+    ofstream fout(outputPath);
+    if (!fout) 
+    {
+        cerr << "ERROR: Cannot create output file.\n";
+        return;
+    }
+
+    char c;
+    while (fin.get(c)) 
+    {
+        if (encryptMode)
+            fout << encryptChar(c, cipher);
+        else
+            fout << decryptChar(c, cipher);
+    }
+
+    fin.close();
+    fout.close();
+}
+
+int main() 
+{
+    cout << "RANDOM MONOALPHABETIC CIPHER \n\n";
+
+    // Mode selection
+
+    char mode;
+    cout << "Do you want to Encrypt or Decrypt? (E/D): \n";
+    cin >> mode;
+    mode = toupper(mode);
+    if (mode != 'E' && mode != 'D') 
+    {
+        cout << "Invalid option. Use E for Encrypt or D for Decrypt.\n";
+        return 1;
+    }
+    cin.ignore();                           // clear newline
+
+    // Keyword input
+
+    string keyword;
+    cout << "Enter the keyword (letters only): ";
+    getline(cin, keyword);
+    if (keyword.empty()) 
+    {
+        cout << "Keyword cannot be empty.\n";
+        return 1;
+    }
+
+    
+    // Input file path
+
+    string inputFile;
+    cout << "Enter full path to the input .txt file (e.g., C:/Users/Name/Documents/input.txt):\n";
+    getline(cin, inputFile);
+
+    // Automatically generate output file name
+
+    size_t lastSlash = inputFile.find_last_of("/\\");
+    string filenameOnly = (lastSlash == string::npos) ? inputFile : inputFile.substr(lastSlash + 1);
+    string outputFile;
+
+    if (mode == 'E')
+        outputFile = filenameOnly.substr(0, filenameOnly.find_last_of('.')) + "_encrypted.txt";
+    else
+        outputFile = filenameOnly.substr(0, filenameOnly.find_last_of('.')) + "_decrypted.txt";
+
+    cout << "\nThe output file will be created as: " << outputFile << "\n\n";
+
+    // Build cipher alphabet
+
+    string cipherAlphabet = buildCipherAlphabet(keyword);
+    cout << "Generated Cipher Alphabet:\n" << cipherAlphabet << "\n\n";
+
+    // Process file
+
+    bool encryptMode = (mode == 'E');
+    processFile(encryptMode, cipherAlphabet, inputFile, outputFile);
+
+    cout << "Operation completed successfully.\n";
+
+    return 0;
+}
