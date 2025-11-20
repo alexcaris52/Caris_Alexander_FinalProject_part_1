@@ -1,5 +1,3 @@
-# Caris_Alexander_FinalProject
-Final Project
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -40,7 +38,7 @@ int main()
     cout << ".docx or any word documents do not work. Convert to txt file before inputing" << endl;
 
     string filename;                                                    // declares new string for new txt file
-    getline(cin >> ws, filename);                                       // reads full line including spaces
+    getline(cin >> ws, filename);                                       // reads full line (ws)including spaces
 
     //  Check file can be opened from user input 
     ifstream check_file(filename);
@@ -53,12 +51,12 @@ int main()
     }
 
     // Read each word from the input file and check dictionary  
-    string test_word;
-    while (check_file >> test_word)
+    string test_word;                                                   // temp variable to store each word from users file
+    while (check_file >> test_word)                                     // reads words one at a time
     {
-        if (!binary_search(words.begin(), words.end(), test_word))
+        if (!binary_search(words.begin(), words.end(), test_word))      //checks if the word is not found in dictionary
         {
-            cout << "Not found: " << test_word << endl;
+            cout << "Not found: " << test_word << endl;                 // prints word. possible spelling error
         }
     }
 
